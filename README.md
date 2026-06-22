@@ -327,25 +327,13 @@ The distillation pipeline (`pipelines/distill_pipeline.py`) was an early experim
 
 ---
 
-## 6. Design Documentation
-
-> For a complete understanding of system architecture, see the docs below.
-
-| Document | Description |
-|----------|-------------|
-| [Architecture](docs/architecture.md) | Boundaries, invariants, component map, lifecycle |
-| [Data Flow](docs/dataflow.md) | Write/read/asset/async paths, execution guarantees |
-| [Entity Model](docs/entity-model.md) | Entity types, storage layout, technology stack |
-
----
-
-## 7. Project Status
+## 6. Project Status
 
 quro-doc is currently in **Alpha** (v0.2.0). The core API surface is stable, but pipelines and worker infrastructure are still evolving. Breaking changes may occur.
 
 ---
 
-## 8. License
+## 7. License
 
 This project is released under the **Unlicense** — free and unencumbered software released into the public domain.
 
@@ -353,7 +341,7 @@ See [LICENSE.txt](LICENSE.txt) for the full text.
 
 ---
 
-## 9. Disclaimer
+## 8. Disclaimer
 
 本软件按"原样"提供，不带有任何明示或暗示的担保。由于代码全由 AI 生成，作者未进行完备的生产环境测试。使用者需自行承担因运行本软件而导致的任何风险、损失或数据损坏。作者对代码的准确性、安全性和有效性不承担任何法律责任。
 
@@ -361,7 +349,7 @@ This software is provided "as is", without warranty of any kind, express or impl
 
 ---
 
-## 10. Acknowledgments
+## 9. Acknowledgments
 
 This project is entirely AI-driven. We thank the following large language models for providing core ideas, architectural design, and all code implementation (in no particular order):
 
