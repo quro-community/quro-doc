@@ -7,14 +7,14 @@ name = "quro-doc"
 version = "0.2.0"
 description = "Lightweight Cognitive Document System — LLM inference cache layer"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Unlicense"}
 authors = [
     {name = "quro"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: The Unlicense",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
