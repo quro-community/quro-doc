@@ -65,7 +65,7 @@ quro-doc = "quro_doc.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-quro_doc = ["templates/*.j2"]
+quro_doc = ["templates/*.j2", "protocols/schemas/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
