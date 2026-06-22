@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quro-doc/schemas/search_response_v2.json",
+  "title": "SearchResponse",
+  "description": "Schema for quro_doc_search response (EvidenceModel v2)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["doc_id", "score", "snippet"],
+    "properties": {
+      "doc_id": {
+        "type": "string"
+      },
+      "score": {
+        "type": "number"
+      },
+      "snippet": {
+        "type": "string"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "content": {
+        "type": "string"
+      },
+      "measurements": {
+        "type": "object",
+        "description": "Provenance map for evidence scoring"
+      },
+      "provenance": {
+        "type": "object"
+      },
+      "protocol_version": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true
+  }
+}

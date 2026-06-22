@@ -1,0 +1,45 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ cq.text }} — Quro Docs{% endblock %}
+{% block content %}
+<div class="cq-header">
+<div class="cq-label">Canonical Question</div>
+<div class="cq-question">{{ cq.text }}</div>
+{% if cq.question_type %}
+<div style="font-size: 12px; color: #999; margin-top: 6px;">type: {{ cq.question_type }}</div>
+{% endif %}
+</div>
+<div class="cq-evidence">
+{% if cq.entities %}
+<div class="cq-entity-section">
+<div class="cq-evidence-title">Entities</div>
+{% for ent in cq.entities %}
+<span class="cq-entity-tag">{{ ent.name }}<span class="entity-type">{{ ent.entity_type }}</span></span>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if cq.edges %}
+<div class="cq-entity-section">
+<div class="cq-evidence-title">Relationships</div>
+{% for edge in cq.edges %}
+<div class="cq-edge-item">
+<span class="edge-from">{{ edge.from }}</span>
+<span class="edge-rel">{{ edge.relation }}</span>
+<span class="edge-to">{{ edge.to }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if cq.source_ref %}
+<div class="cq-entity-section">
+<div class="cq-evidence-title">Source</div>
+<a href="{{ rel_root }}docs/raw/{{ cq.source_ref }}.html" style="font-size: 13px; color: #1a73e8;">{{ cq.source_ref }}</a>
+</div>
+{% endif %}
+
+{% if not cq.entities and not cq.edges %}
+<p class="cq-no-evidence">No entity anchors recorded for this question.</p>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ doc.title }} — Quro Docs{% endblock %}
+{% block content %}
+<div class="toolbar">
+<div>
+<div class="toolbar-title">{{ doc.title }}</div>
+<div class="toolbar-tags">{% for tag in doc.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</div>
+</div>
+</div>
+{% if doc.entities %}
+<div class="doc-entities-bar">
+<span class="doc-entities-label">Entities</span>
+{% for ent in doc.entities %}
+<span class="cq-entity-tag">{{ ent.name }}<span class="entity-type">{{ ent.entity_type }}</span></span>
+{% endfor %}
+</div>
+{% endif %}
+<div class="doc-body">
+<article class="markdown-body">
+{{ doc.rendered_body | safe }}
+</article>
+{% if doc.cq_refs %}
+<div class="cq-references">
+<div class="cq-references-title">Canonical Questions</div>
+{% for ref in doc.cq_refs %}
+<a class="cq-badge" href="{{ rel_root }}docs/cq/{{ ref.question_id }}.html">{{ ref.text }}</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+{% endblock %}

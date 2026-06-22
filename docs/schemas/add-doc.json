@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ICCCS Add Document v2",
+  "type": "object",
+  "required": [
+    "doc_id",
+    "topic",
+    "intent",
+    "body",
+    "created_at"
+  ],
+  "properties": {
+    "doc_id": {
+      "type": "string",
+      "description": "唯一文档ID（UUID 或 hash）"
+    },
+
+    "topic": {
+      "type": "string",
+      "enum": [
+        "arch",
+        "dataflow",
+        "database",
+        "design",
+        "decision",
+        "fact"
+      ]
+    },
+
+    "intent": {
+      "type": "string",
+      "description": "行为语义（例如：define problem / propose solution）"
+    },
+
+    "body": {
+      "type": "string",
+      "description": "核心内容（自由文本）"
+    },
+
+    "context_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 5
+    },
+
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["doc_id", "relation"],
+        "properties": {
+          "doc_id": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "refines",
+              "contradicts",
+              "depends_on",
+              "duplicates",
+              "extends"
+            ]
+          }
+        }
+      },
+      "description": "弱关系（lazy graph）"
+    },
+
+    "source": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["human", "llm", "system"]
+        },
+        "agent": {
+          "type": "string"
+        }
+      }
+    },
+
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+
+    "version": {
+      "type": "string",
+      "default": "v2"
+    },
+
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "git_hash": {
+      "type": "string",
+      "description": "自动注入（提交时生成）"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Quro Docs{% endblock %}</title>
+<link rel="stylesheet" href="{{ rel_root }}styles.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="sidebar-header">
+<div class="sidebar-title">Quro Docs</div>
+<div class="sidebar-subtitle">Static offline inspection surface</div>
+</div>
+<nav class="sidebar-body">
+<div class="sidebar-section">
+<div class="sidebar-section-title" data-toggle="raw-docs">Raw Docs</div>
+<div class="sidebar-group" id="group-raw-docs">
+{% for doc in sidebar.raw_docs %}
+<a class="sidebar-item{% if doc.active %} active{% endif %}" href="{{ rel_root }}docs/raw/{{ doc.doc_id }}.html">{{ doc.label }}</a>
+{% endfor %}
+</div>
+</div>
+<div class="sidebar-section">
+<div class="sidebar-section-title" data-toggle="cq">Canonical Questions</div>
+<div class="sidebar-group" id="group-cq">
+{% for cq in sidebar.cqs %}
+<a class="sidebar-item{% if cq.active %} active{% endif %}" href="{{ rel_root }}docs/cq/{{ cq.question_id }}.html">{{ cq.text }}</a>
+{% endfor %}
+</div>
+</div>
+</nav>
+</aside>
+<main class="content">
+{% block content %}{% endblock %}
+</main>
+</div>
+<script src="{{ rel_root }}app.js"></script>
+</body>
+</html>

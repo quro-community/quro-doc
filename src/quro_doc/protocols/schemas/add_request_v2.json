@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quro-doc/schemas/add_request_v2.json",
+  "title": "AddRequest",
+  "description": "Schema for quro_doc_add input payload (v2)",
+  "type": "object",
+  "required": ["title", "topic", "intent", "tags"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "specification",
+        "analysis",
+        "how-to",
+        "reference",
+        "design",
+        "tutorial",
+        "troubleshooting",
+        "overview",
+        "api-reference",
+        "configuration",
+        "testing",
+        "deployment",
+        "security",
+        "performance",
+        "migration"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "doc_id": {
+      "type": "string"
+    },
+    "refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "metadata": {
+      "type": "object",
+      "default": {}
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated", "archived"],
+      "description": "Document lifecycle status. Core enforces valid values."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this document (e.g., 1.0.0)."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "doc_id of the document this version replaces."
+    },
+    "source": {
+      "type": "object",
+      "default": {}
+    },
+    "git_hash": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "context_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "file_path": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

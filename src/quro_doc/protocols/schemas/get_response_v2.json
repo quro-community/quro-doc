@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quro-doc/schemas/get_response_v2.json",
+  "title": "GetResponse",
+  "description": "Schema for quro_doc_get response (v2)",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["doc_id", "body", "meta", "protocol_version"],
+      "properties": {
+        "doc_id": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "meta": {
+          "type": "object"
+        },
+        "protocol_version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "required": ["status", "doc_id"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "not_found"
+        },
+        "doc_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

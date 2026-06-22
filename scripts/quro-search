@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""CLI tool: search documents in quro-doc.
+
+Usage:
+  quro-search "query text"
+  quro-search --query "my query" --top-k 5 --use-intent
+"""
+
+import sys
+import os
+import json
+import argparse
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from quro_doc.api import quro_doc_search
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Search documents in quro-doc")
+    parser.add_argument("query", nargs="?", help="Search query text")
+    parser.add_argument("--query", "-q", dest="query_flag", help="Search query text (alt)")
+    parser.add_argument("--top-k", type=int, default=10, help="Number of results (default: 10)")
+    parser.add_argument("--use-intent", action="store_true", help="Include intent data in results")
+    parser.add_argument("--use-signature", action="store_true", help="Include signature data in results")
+    parser.add_argument("--json", help="Full query as JSON string")
+    args = parser.parse_args()
+
+    if args.json:
+        query = json.loads(args.json)
+    else:
+        q = args.query or args.query_flag
+        if not q:
+            parser.error("Query text is required")
+        query = {
+            "query": q,
+            "top_k": args.top_k,
+            "use_intent": args.use_intent,
+            "use_signature": args.use_signature,
+        }
+
+    results = quro_doc_search(query)
+    print(json.dumps(results, indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

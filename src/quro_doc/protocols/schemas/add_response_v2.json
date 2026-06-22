@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quro-doc/schemas/add_response_v2.json",
+  "title": "AddResponse",
+  "description": "Schema for quro_doc_add response (v2)",
+  "type": "object",
+  "required": ["status", "doc_id", "message", "protocol_version"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "exists", "error"]
+    },
+    "doc_id": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "materialize_job_id": {
+      "type": "string"
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_errors": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

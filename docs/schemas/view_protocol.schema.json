@@ -1,0 +1,267 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ViewLayerProtocol",
+  "description": "Protocol definitions for Quro-Doc View Layer — evidence orchestration runtime.",
+  "protocol_version": "1.0.0",
+  "definitions": {
+    "EvidenceCandidate": {
+      "title": "EvidenceCandidate",
+      "description": "Central data unit of the View Layer. Represents a single evidence instance from any source.",
+      "type": "object",
+      "required": ["candidate_id", "source_type", "content", "metadata"],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "description": "Unique identifier for this candidate instance"
+        },
+        "source_type": {
+          "type": "string",
+          "enum": ["raw", "distill", "qa", "summary", "cache"],
+          "description": "Origin source of this candidate"
+        },
+        "content": {
+          "type": "string",
+          "description": "Evidence text content"
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["doc_id", "chunk_id"],
+          "properties": {
+            "doc_id": { "type": "string" },
+            "chunk_id": { "type": "string" },
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "vector": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "tag": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "intent": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "final": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "properties": {
+            "tokens": { "type": "integer", "minimum": 0 },
+            "latency_ms": { "type": "number", "minimum": 0 }
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "provenance": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "features": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "ViewConfig": {
+      "title": "ViewConfig",
+      "description": "Configuration for a named view — defines sources, scorers, pruner strategy, and reranker toggles.",
+      "type": "object",
+      "required": ["view_name", "sources"],
+      "properties": {
+        "view_name": {
+          "type": "string",
+          "description": "Name of this view configuration"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["raw", "qa_cache", "distill", "summary", "cache"]
+          },
+          "description": "Enabled candidate source types in priority order"
+        },
+        "scorer": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z_]+$": { "type": "number" }
+          },
+          "description": "Scorer name -> weight mapping. Negative weights for penalties."
+        },
+        "pruner": {
+          "type": "object",
+          "required": ["strategy"],
+          "properties": {
+            "strategy": {
+              "type": "string",
+              "enum": ["top_k", "mmr", "knapsack", "confidence_threshold"]
+            },
+            "top_k": { "type": "integer", "minimum": 1 },
+            "max_tokens": { "type": "integer", "minimum": 1 },
+            "lambda": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "MMR diversity-relevance tradeoff"
+            },
+            "min_confidence": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "reranker": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+
+    "CandidateSourceQuery": {
+      "title": "CandidateSourceQuery",
+      "description": "Input to a CandidateSource adapter's search method.",
+      "type": "object",
+      "required": ["query"],
+      "properties": {
+        "query": { "type": "string" },
+        "query_embedding": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "filter": {
+          "type": "object",
+          "properties": {
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "source_types": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "budget": {
+          "type": "object",
+          "properties": {
+            "max_candidates": { "type": "integer", "minimum": 1 },
+            "max_tokens": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "trace_id": { "type": "string" }
+      },
+      "anyOf": [
+        { "required": ["query"] },
+        { "required": ["query_embedding"] }
+      ]
+    },
+
+    "CandidateSourceResponse": {
+      "title": "CandidateSourceResponse",
+      "description": "Response from a CandidateSource adapter.",
+      "type": "object",
+      "required": ["candidates", "source_type", "meta"],
+      "properties": {
+        "candidates": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EvidenceCandidate" }
+        },
+        "source_type": {
+          "type": "string",
+          "description": "Source type that produced these candidates"
+        },
+        "meta": {
+          "type": "object",
+          "required": ["protocol_version", "latency_ms"],
+          "properties": {
+            "protocol_version": { "type": "string" },
+            "latency_ms": { "type": "number" },
+            "total_candidates": { "type": "integer" }
+          }
+        }
+      }
+    },
+
+    "ScorerConfig": {
+      "title": "ScorerConfig",
+      "description": "Configuration for a single scorer in the scoring engine.",
+      "type": "object",
+      "required": ["name", "weight"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["semantic_similarity", "tag_overlap", "source_priority", "recency", "confidence", "token_penalty", "popularity", "intent_match"]
+        },
+        "weight": { "type": "number" },
+        "required": { "type": "boolean", "default": false }
+      }
+    },
+
+    "ViewTelemetry": {
+      "title": "ViewTelemetry",
+      "description": "Telemetry data for a single View Layer invocation.",
+      "type": "object",
+      "required": ["trace_id", "view_name", "latency_ms"],
+      "properties": {
+        "trace_id": { "type": "string" },
+        "view_name": { "type": "string" },
+        "latency_ms": { "type": "number", "minimum": 0 },
+        "candidates_considered": { "type": "integer", "minimum": 0 },
+        "candidates_selected": { "type": "integer", "minimum": 0 },
+        "estimated_tokens": { "type": "integer", "minimum": 0 },
+        "qa_shortcut_used": { "type": "boolean" },
+        "source_distribution": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "scorer_breakdown": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+
+    "QAQuery": {
+      "title": "QAQuery",
+      "description": "Query for QA shortcut fast-path check.",
+      "type": "object",
+      "required": ["query"],
+      "properties": {
+        "query": { "type": "string" },
+        "min_confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.9
+        }
+      }
+    },
+
+    "QAResult": {
+      "title": "QAResult",
+      "description": "Result of QA shortcut lookup.",
+      "type": "object",
+      "required": ["matched", "confidence"],
+      "properties": {
+        "matched": { "type": "boolean" },
+        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "answer": { "type": "string" },
+        "provenance": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+Act as a document analyst. Your task is to examine a provided document chunk and identify up to {{ max_entries }} "What-Is" questions that the document **appears not to answer**. Use existing intent IDs from the list provided where applicable, or propose a new one using a kebab-case, dot-separated format (e.g., "product.pricing-model").
+
+For each entry, output a JSON object with:
+- `intent_id`: string — existing ID from the list or a new proposed ID.
+- `question`: string — a grammatically complete "What-Is" interrogative sentence.
+- `reason`: string — a brief debug reason explaining why the document appears not to answer the question. Must start with the phrase "appears not to answer because...".
+
+**Constraints**:
+- Only include up to {{ max_entries }} entries.
+- Do **not** assert that the document definitely lacks the information. Use the specified phrasing for `reason`.
+- Return **only** a JSON array of objects. No extra text before or after.
+
+### Few-shot examples
+
+**Example 1**
+Document chunk: "Our subscription plan includes unlimited downloads for Pro users. Basic users get 5 downloads per month."
+Existing intent list: ["pricing.free-trial", "features.download-limit"]
+Output:
+[
+  {
+    "intent_id": "pricing.free-trial",
+    "question": "What is the free trial period for the subscription?",
+    "reason": "appears not to answer because the document mentions Pro and Basic plans but does not mention any free trial offer."
+  },
+  {
+    "intent_id": "features.refund-policy",
+    "question": "What is the refund policy for paid plans?",
+    "reason": "appears not to answer because the document describes download limits but does not discuss refunds or cancellations."
+  }
+]
+
+**Example 2**
+Document chunk: "The server requires at least 8GB RAM and a 64-bit processor. Supported OS: Ubuntu 20.04 or later."
+Existing intent list: ["setup.minimum-requirements", "setup.supported-os"]
+Output:
+[
+  {
+    "intent_id": "setup.network-config",
+    "question": "What is the required network configuration for the server?",
+    "reason": "appears not to answer because the document lists RAM, processor, and OS requirements but does not mention network ports, firewall rules, or IP settings."
+  }
+]
+
+**Example 3** (proposing a new intent ID)
+Document chunk: "The dashboard shows daily active users and retention rate. You can export reports in CSV format."
+Existing intent list: ["analytics.metrics-definition", "analytics.export-format"]
+Output:
+[
+  {
+    "intent_id": "analytics.data-retention-period",
+    "question": "What is the data retention period for historical analytics?",
+    "reason": "appears not to answer because the document describes current metrics and export options but does not specify how long historical data is stored."
+  }
+]
+
+### Now process the actual document chunk below:
+
+Existing intent list:
+{{ intent_list }}
+
+Chunk:
+{{ chunk_text }}

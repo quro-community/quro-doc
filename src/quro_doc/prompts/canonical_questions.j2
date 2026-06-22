@@ -1,0 +1,88 @@
+### Canonical Question Generator — Entity-Relation Extraction
+
+Act as a Document Retrieval System Question Generator. Your task consists of TWO sequential steps. Complete Step 1 fully before proceeding to Step 2.
+
+#### Step 1: Generate Canonical Questions
+
+Carefully read the document to generate canonical questions that serve as stable routing keys for document retrieval. These questions should encapsulate conceptual understanding, design rationales, mechanisms, and relationships.
+
+##### Constraints:
+- Generate a maximum of {{ max_questions }} questions; fewer if the document is concise.
+- Ensure each question is directly answerable from the text.
+- Merge semantically similar questions into broader ones to avoid duplication.
+- Each question must be self-contained—avoid pronouns referencing other questions.
+- Prioritize questions that mention specific components, decisions, trade-offs, or mechanisms.
+- Exclude questions about file paths, line counts, or configuration values.
+- Do not include questions about components labeled as "future" or "planned"; focus only on existing document knowledge.
+
+##### Question Types:
+- **Conceptual**: Understanding of concepts, abstractions, or ideas.
+- **Design Rationale**: Reasons behind specific design choices.
+- **Mechanism**: Functionality of processes, pipelines, or algorithms.
+- **Relationship**: Connections between components or ideas.
+
+---
+
+#### Step 2: Extract Entities and Edges for These Questions
+
+Focus only on the questions generated and the relevant document sections that answer them. Extract the conceptual structure underlying the answers.
+
+##### What Makes a Good Entity:
+- An entity is a central concept, design principle, process, formula, or data structure essential for understanding the answers.
+- Entity names should describe what something is or does, not its code name.
+- Lock your entity list after finalizing it, avoiding additions or removals during edge creation.
+- Aim for 5–8 entities for quality over quantity.
+
+##### What Makes a Good Edge:
+- An edge captures a meaningful relationship between two entities from the locked list.
+- Prioritize data flow relationships, then control relationships, and lastly structural relationships.
+- Create an edge if the relationship is explicitly stated, directly inferable from data flow, or clearly implied by architecture.
+- Avoid overthinking; a sparse but correct edge set is preferred.
+
+##### Edge Relation Types:
+- **contains**: Entity A permanently part of Entity B.
+- **computes**: Entity A calculates or produces Entity B.
+- **depends_on**: Entity A requires Entity B for functionality.
+- **feeds_into**: Entity A produces data consumed by Entity B.
+- **governs**: Entity A defines rules or constraints for Entity B.
+- **implements**: Entity A is a realization of Entity B.
+- **plugs_into**: Entity A is an optional module that connects to Entity B.
+- **relates_to**: A meaningful relationship exists, but none of the above fits.
+
+---
+
+### Output Format
+
+Return ONLY a JSON object with the following structure:
+
+```json
+{
+  "questions": [
+    {
+      "text": "The question string",
+      "question_type": "conceptual | design_rationale | mechanism | relationship"
+    }
+  ],
+  "entities": [
+    {
+      "name": "EntityName",
+      "entity_type": "concept | design_principle | algorithm | data_structure | process | formula"
+    }
+  ],
+  "edges": [
+    {
+      "from": "EntityName",
+      "to": "EntityName",
+      "relation": "contains | computes | depends_on | feeds_into | governs | implements | plugs_into | relates_to"
+    }
+  ]
+}
+```
+
+**Important:** All "relation" values must be lowercase exactly as listed. No capitalization variants.
+
+### Text Input
+
+Use the following text to generate questions:
+
+{{ body[:section_char_limit] }}

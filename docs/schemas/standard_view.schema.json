@@ -1,0 +1,439 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StandardViewProtocol",
+  "description": "Protocol definitions for Quro-Doc Standard View — query-time context compilation layer.",
+  "protocol_version": "1.0.0",
+  "definitions": {
+    "StandardViewConfig": {
+      "title": "StandardViewConfig",
+      "description": "Configuration for Standard View — defines sections, planner strategy, and token budget.",
+      "type": "object",
+      "required": ["view_name"],
+      "properties": {
+        "view_name": {
+          "type": "string",
+          "description": "Name of this view configuration (e.g., 'standard-view')"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Goal", "Summary", "Architecture", "Dir Structure", "DataFlow", "Files"]
+          },
+          "description": "Ordered list of sections to include in rendered output"
+        },
+        "planner": {
+          "type": "object",
+          "required": ["strategy"],
+          "properties": {
+            "strategy": {
+              "type": "string",
+              "enum": ["heuristic", "embedding", "llm"],
+              "description": "Section planning strategy"
+            },
+            "max_sections": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum number of sections in rendered output"
+            },
+            "min_evidence_per_section": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 1,
+              "description": "Minimum evidence required per section (0 = allow empty sections)"
+            },
+            "max_evidence_per_section": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5,
+              "description": "Maximum evidence candidates per section"
+            }
+          }
+        },
+        "token_budget": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Token budget shared across all sections"
+        },
+        "enable_summarization": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable LLM summarization per section (future)"
+        },
+        "render_format": {
+          "type": "string",
+          "enum": ["txt", "markdown"],
+          "default": "txt",
+          "description": "Output format for rendered view"
+        }
+      }
+    },
+
+    "Section": {
+      "title": "Section",
+      "description": "A single section in the Standard View AST.",
+      "type": "object",
+      "required": ["title", "summary", "evidence"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Section header (e.g., 'Architecture', 'DataFlow')"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Synthesized section summary (may be empty string if no LLM)"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EvidenceReference"
+          },
+          "description": "Evidence references backing this section"
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated token count for this section"
+        }
+      }
+    },
+
+    "StandardView": {
+      "title": "StandardView",
+      "description": "Internal AST representation of the compiled Standard View.",
+      "type": "object",
+      "required": ["sections", "metadata", "query"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Section"
+          },
+          "description": "Ordered list of compiled sections"
+        },
+        "metadata": {
+          "$ref": "../schemas/view_protocol.schema.json#/definitions/ViewTelemetry",
+          "description": "Telemetry data for this Standard View invocation"
+        },
+        "query": {
+          "type": "string",
+          "description": "Original query text (included for logging provenance)"
+        },
+        "token_usage": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total token usage across all sections"
+        },
+        "token_budget": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Configured token budget for this view"
+        }
+      }
+    },
+
+    "EvidenceReference": {
+      "title": "EvidenceReference",
+      "description": "Lightweight reference to an evidence candidate within a section.",
+      "type": "object",
+      "required": ["candidate_id", "chunk_id", "doc_id", "content_preview"],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "description": "Reference to EvidenceCandidate.candidate_id"
+        },
+        "doc_id": {
+          "type": "string",
+          "description": "Source document ID"
+        },
+        "chunk_id": {
+          "type": "string",
+          "description": "Source chunk ID"
+        },
+        "content_preview": {
+          "type": "string",
+          "description": "Preview of the evidence content (first ~200 chars)"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Final score from View Layer scoring"
+        },
+        "file_path": {
+          "type": "string",
+          "description": "File path if evidence references a source file"
+        },
+        "line_range": {
+          "type": "object",
+          "properties": {
+            "start": { "type": "integer", "minimum": 1 },
+            "end": { "type": "integer", "minimum": 1 }
+          },
+          "description": "Line range if evidence references file lines"
+        }
+      }
+    },
+
+    "SectionPlannerConfig": {
+      "title": "SectionPlannerConfig",
+      "description": "Configuration for the Section Planner engine.",
+      "type": "object",
+      "required": ["strategy"],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["heuristic", "embedding", "llm"],
+          "description": "Section planning strategy"
+        },
+        "section_keywords": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "description": "Section name -> keyword list for heuristic classification",
+          "example": {
+            "Architecture": ["architecture", "module", "component", "layer", "system"],
+            "DataFlow": ["flow", "pipeline", "stream", "process", "data"],
+            "Dir Structure": ["directory", "folder", "src/", "tree"]
+          }
+        },
+        "section_tags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "description": "Section name -> tag list for EvidenceCandidate tag-based classification",
+          "example": {
+            "Architecture": ["architecture", "design"],
+            "Dir Structure": ["structure", "layout"]
+          }
+        }
+      }
+    },
+
+    "SectionPlan": {
+      "title": "SectionPlan",
+      "description": "Output of SectionPlanner — planned sections with evidence assignments.",
+      "type": "object",
+      "required": ["sections", "token_allocation"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "evidence_ids", "token_budget"],
+            "properties": {
+              "title": { "type": "string" },
+              "evidence_ids": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Candidate IDs assigned to this section"
+              },
+              "token_budget": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Token budget allocated to this section"
+              },
+              "relevance_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Relevance score for this section (0 = skip)"
+              }
+            }
+          }
+        },
+        "token_allocation": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Section name -> token budget mapping"
+        },
+        "skipped_sections": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sections skipped due to low relevance or no evidence"
+        }
+      }
+    },
+
+    "StandardViewQuery": {
+      "title": "StandardViewQuery",
+      "description": "Query parameters that trigger Standard View rendering.",
+      "type": "object",
+      "required": ["query"],
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query text"
+        },
+        "view": {
+          "type": "string",
+          "enum": ["default", "standard", "debug"],
+          "default": "default",
+          "description": "View renderer to use for response formatting"
+        },
+        "top_k": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of candidates to retrieve"
+        },
+        "use_intent": { "type": "boolean" },
+        "use_signature": { "type": "boolean" },
+        "trace_id": {
+          "type": "string",
+          "description": "Optional trace ID for observability"
+        }
+      }
+    },
+
+    "StandardViewResponse": {
+      "title": "StandardViewResponse",
+      "description": "Response from quro_doc_search with view='standard'.",
+      "type": "object",
+      "required": ["content", "format", "view", "trace_id"],
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Rendered TXT content with section-based organization"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["txt", "markdown"],
+          "description": "Output format"
+        },
+        "view": {
+          "type": "string",
+          "description": "View renderer name (e.g., 'standard-view')"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Trace ID for observability"
+        },
+        "telemetry": {
+          "type": "object",
+          "required": [
+            "default_view_latency_ms",
+            "standard_view_latency_ms",
+            "candidates_considered",
+            "candidates_selected",
+            "sections_planned",
+            "estimated_tokens"
+          ],
+          "properties": {
+            "default_view_latency_ms": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Latency of Default View pipeline (retrieval + scoring + pruning)"
+            },
+            "standard_view_latency_ms": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Latency of Standard View compilation (planning + rendering)"
+            },
+            "candidates_considered": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total candidates from Default View pipeline"
+            },
+            "candidates_selected": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Candidates selected after section allocation"
+            },
+            "sections_planned": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of sections in rendered output"
+            },
+            "estimated_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total estimated token usage"
+            },
+            "token_budget": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Configured token budget"
+            }
+          }
+        }
+      }
+    },
+
+    "StandardViewLogEntry": {
+      "title": "StandardViewLogEntry",
+      "description": "Log entry schema for Standard View logging system.",
+      "type": "object",
+      "required": ["trace_id", "query", "default_view_candidates", "standard_view_telemetry"],
+      "properties": {
+        "trace_id": { "type": "string" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "query": {
+          "type": "string",
+          "description": "Original query text"
+        },
+        "query_params": {
+          "type": "object",
+          "description": "Query parameters (top_k, view, etc.)"
+        },
+        "default_view_candidates": {
+          "type": "integer",
+          "description": "Number of candidates from Default View"
+        },
+        "default_view_file": {
+          "type": "string",
+          "description": "Path to default_view.json log file"
+        },
+        "standard_view_file": {
+          "type": "string",
+          "description": "Path to standard_view.txt log file"
+        },
+        "standard_view_telemetry": {
+          "$ref": "#/definitions/StandardViewResponse/properties/telemetry"
+        }
+      }
+    },
+
+    "TokenBudget": {
+      "title": "TokenBudget",
+      "description": "Token budget allocation across sections.",
+      "type": "object",
+      "properties": {
+        "total_budget": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total token budget"
+        },
+        "allocation": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Section name -> allocated token count",
+          "example": {
+            "Goal": 120,
+            "Summary": 240,
+            "Architecture": 300,
+            "Dir Structure": 120,
+            "DataFlow": 180,
+            "Files": 240
+          }
+        },
+        "allocation_strategy": {
+          "type": "string",
+          "enum": ["percentage", "fixed", "dynamic"],
+          "description": "Token allocation strategy"
+        },
+        "overflow_policy": {
+          "type": "string",
+          "enum": ["trim_lowest_priority", "expand_highest_relevance", "error"],
+          "description": "Policy when total tokens exceed budget"
+        }
+      }
+    }
+  }
+}

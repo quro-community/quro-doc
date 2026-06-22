@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VectorStoreProtocol",
+  "description": "Protocol contract for quro-doc vector store adapters. Version 1.0.0.",
+  "definitions": {
+    "VectorRecord": {
+      "type": "object",
+      "required": ["id", "embedding", "metadata", "namespace"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier: {doc_id}::chunk::{index}",
+          "pattern": "^.+::chunk::\\d+$"
+        },
+        "embedding": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "Dense vector embedding"
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["doc_id", "chunk_index"],
+          "properties": {
+            "doc_id": {"type": "string"},
+            "chunk_index": {"type": "integer", "minimum": 0},
+            "created_at": {"type": "string", "format": "date-time"},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "distill_signature": {"type": "object"}
+          },
+          "additionalProperties": true
+        },
+        "namespace": {"type": "string", "default": "default"}
+      },
+      "additionalProperties": false
+    },
+    "UpsertRequest": {
+      "type": "object",
+      "required": ["records"],
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/VectorRecord"},
+          "minItems": 1
+        },
+        "overwrite": {"type": "boolean", "default": true}
+      },
+      "additionalProperties": false
+    },
+    "UpsertResponse": {
+      "type": "object",
+      "required": ["status", "upserted_count"],
+      "properties": {
+        "status": {"type": "string", "enum": ["ok"]},
+        "upserted_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "EmbeddingProvider": {
+      "type": "object",
+      "required": ["provider", "text"],
+      "properties": {
+        "provider": {"type": "string"},
+        "text": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "QueryRequest": {
+      "type": "object",
+      "anyOf": [
+        {"required": ["query_embedding"]},
+        {"required": ["embedding_provider"]}
+      ],
+      "properties": {
+        "query_embedding": {
+          "type": "array",
+          "items": {"type": "number"}
+        },
+        "embedding_provider": {"$ref": "#/definitions/EmbeddingProvider"},
+        "top_k": {"type": "integer", "minimum": 1, "default": 10},
+        "filter": {
+          "type": "object",
+          "properties": {
+            "namespace": {"type": "string"},
+            "metadata_predicate": {"type": "object"}
+          },
+          "additionalProperties": true
+        },
+        "trace_id": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "Hit": {
+      "type": "object",
+      "required": ["id", "doc_id", "chunk_index", "score"],
+      "properties": {
+        "id": {"type": "string"},
+        "doc_id": {"type": "string"},
+        "chunk_index": {"type": "integer"},
+        "score": {"type": "number"},
+        "metadata": {"type": "object"},
+        "snippet": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "QueryResponse": {
+      "type": "object",
+      "required": ["query_request", "hits", "meta"],
+      "properties": {
+        "query_request": {"$ref": "#/definitions/QueryRequest"},
+        "hits": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Hit"}
+        },
+        "meta": {
+          "type": "object",
+          "required": ["protocol_version", "adapter", "adapter_version"],
+          "properties": {
+            "protocol_version": {"type": "string"},
+            "adapter": {"type": "string"},
+            "adapter_version": {"type": "string"}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "required": ["status", "code", "message"],
+      "properties": {
+        "status": {"type": "string", "enum": ["error"]},
+        "code": {"type": "string"},
+        "message": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "DeleteResponse": {
+      "type": "object",
+      "required": ["deleted_count"],
+      "properties": {
+        "deleted_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "PersistResponse": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"type": "string", "enum": ["ok"]}
+      },
+      "additionalProperties": false
+    },
+    "ProtocolMeta": {
+      "type": "object",
+      "required": ["protocol_version", "adapter", "adapter_version", "vector_count"],
+      "properties": {
+        "protocol_version": {"type": "string"},
+        "adapter": {"type": "string"},
+        "adapter_version": {"type": "string"},
+        "vector_count": {"type": "integer", "minimum": 0},
+        "created_at": {"type": "string", "format": "date-time"},
+        "config_snapshot": {"type": "object"}
+      },
+      "additionalProperties": true
+    }
+  }
+}

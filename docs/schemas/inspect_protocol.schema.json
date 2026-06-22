@@ -1,0 +1,385 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QuroDoc Inspect Protocol",
+  "description": "Protocol between quro-doc Core and Inspect Extension for metadata enumeration, introspection, and filtering. Version 1.0.0.",
+  "protocol_version": "1.0.0",
+  "definitions": {
+    "DocSummary": {
+      "title": "DocSummary",
+      "description": "Lightweight per-document metadata summary returned by list operations.",
+      "type": "object",
+      "required": ["doc_id"],
+      "properties": {
+        "doc_id": {
+          "type": "string",
+          "description": "Unique document identifier"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Document topic if present"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Document tags if present"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Document creation timestamp"
+        },
+        "source": {
+          "type": "object",
+          "description": "Source metadata if present"
+        },
+        "metadata_keys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Top-level keys present in this document's user-defined metadata"
+        },
+        "body_size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Size of the document body in bytes"
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "MetadataKeyInfo": {
+      "title": "MetadataKeyInfo",
+      "description": "Discovered metadata field with type information and coverage statistics.",
+      "type": "object",
+      "required": ["key", "value_type", "doc_count", "total_docs"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Metadata field name"
+        },
+        "value_type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "array", "object", "null", "mixed"],
+          "description": "Inferred JSON type of this key's values. 'mixed' if types vary across documents."
+        },
+        "doc_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of documents that contain this key"
+        },
+        "total_docs": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total documents scanned"
+        },
+        "coverage": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of documents containing this key (doc_count / total_docs)"
+        },
+        "sample_values": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {},
+          "description": "Up to 5 representative values for this key"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "MetadataFilter": {
+      "title": "MetadataFilter",
+      "description": "A single metadata filter criterion. Multiple filters are AND-combined.",
+      "type": "object",
+      "required": ["key", "operator"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Metadata field name to filter on. Supports dot-notation for nested keys (e.g., 'source.type')."
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["eq", "neq", "contains", "gt", "gte", "lt", "lte", "exists", "in"],
+          "description": "Comparison operator. 'exists' does not require a value."
+        },
+        "value": {
+          "description": "Value to compare against. Required for all operators except 'exists'.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "array" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "operator": { "const": "exists" } }
+          },
+          "then": {
+            "properties": { "value": { "type": "null" } }
+          }
+        }
+      ]
+    },
+
+    "InspectListRequest": {
+      "title": "InspectListRequest",
+      "description": "Request to enumerate doc-ids with lightweight metadata summaries.",
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 100,
+          "description": "Maximum number of doc summaries to return"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Pagination offset"
+        },
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MetadataFilter" },
+          "description": "Optional metadata filters to apply before pagination"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectListResponse": {
+      "title": "InspectListResponse",
+      "description": "Response for list_doc_ids operation.",
+      "type": "object",
+      "required": ["protocol_version", "doc_ids", "total", "has_more"],
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "doc_ids": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/DocSummary" },
+          "description": "Ordered list of document summaries"
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of documents (before pagination, after filtering)"
+        },
+        "has_more": {
+          "type": "boolean",
+          "description": "True if more documents exist beyond the current page"
+        },
+        "latency_ms": {
+          "type": "number",
+          "description": "Operation latency in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectGetMetadataRequest": {
+      "title": "InspectGetMetadataRequest",
+      "description": "Request to retrieve full metadata for a single doc_id.",
+      "type": "object",
+      "required": ["doc_id"],
+      "properties": {
+        "doc_id": {
+          "type": "string",
+          "description": "Document identifier"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectGetMetadataResponse": {
+      "title": "InspectGetMetadataResponse",
+      "description": "Response for get_metadata operation (success case).",
+      "type": "object",
+      "required": ["protocol_version", "doc_id", "metadata"],
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "doc_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Full metadata object for the document (unwrapped from Core's nested meta structure).",
+          "additionalProperties": true
+        },
+        "latency_ms": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectGetMetadataNotFoundResponse": {
+      "title": "InspectGetMetadataNotFoundResponse",
+      "description": "Response for get_metadata when doc_id is not found.",
+      "type": "object",
+      "required": ["protocol_version", "status", "doc_id"],
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "status": {
+          "type": "string",
+          "const": "not_found"
+        },
+        "doc_id": {
+          "type": "string"
+        },
+        "latency_ms": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectListKeysRequest": {
+      "title": "InspectListKeysRequest",
+      "description": "Request to discover all metadata member field names across all documents.",
+      "type": "object",
+      "properties": {
+        "min_coverage": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.0,
+          "description": "Minimum fraction of documents that must contain the key (0.0 = show all keys)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectListKeysResponse": {
+      "title": "InspectListKeysResponse",
+      "description": "Response for list_metadata_keys operation.",
+      "type": "object",
+      "required": ["protocol_version", "metadata_keys", "total_docs"],
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "metadata_keys": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MetadataKeyInfo" },
+          "description": "Discovered metadata keys sorted by doc_count descending"
+        },
+        "total_docs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of documents scanned"
+        },
+        "latency_ms": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectQueryRequest": {
+      "title": "InspectQueryRequest",
+      "description": "Request to filter documents by metadata criteria.",
+      "type": "object",
+      "required": ["filters"],
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MetadataFilter" },
+          "minItems": 1,
+          "description": "Filters are AND-combined. For OR semantics, use multiple calls."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 100
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectQueryResponse": {
+      "title": "InspectQueryResponse",
+      "description": "Response for query_by_metadata operation.",
+      "type": "object",
+      "required": ["protocol_version", "results", "total", "has_more"],
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "results": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/DocSummary" },
+          "description": "Matching document summaries"
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total matching documents (before pagination)"
+        },
+        "has_more": {
+          "type": "boolean"
+        },
+        "filters_applied": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MetadataFilter" },
+          "description": "Echo of the applied filters for traceability"
+        },
+        "latency_ms": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "InspectErrorResponse": {
+      "title": "InspectErrorResponse",
+      "description": "Generic error response for any inspect operation.",
+      "type": "object",
+      "required": ["status", "code", "message"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "error"
+        },
+        "code": {
+          "type": "string",
+          "description": "Machine-readable error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error description"
+        },
+        "protocol_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "latency_ms": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quro-doc/schemas/metadata_set_v1.json",
+  "title": "MetadataSet",
+  "description": "Schema for caller-declared metadata_set parameter — Inspect Protocol v1.0.0",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "required": ["key"],
+    "properties": {
+      "key": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": {
+        "type": "string"
+      },
+      "domain": {
+        "type": "string"
+      },
+      "map_to": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  }
+}
