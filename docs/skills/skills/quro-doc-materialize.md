@@ -3,7 +3,7 @@ name: quro-doc-materialize
 description: "quro-doc add → materialize workflow for documents containing images/assets: CLI-based add with image media extraction, proxy workaround, and asset download verification"
 version: 1.0.0
 author: quro
-license: MIT
+license: Unlicensed
 platforms: [macos, linux]
 metadata:
   hermes:
