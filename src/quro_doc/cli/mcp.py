@@ -28,7 +28,8 @@ def cmd_mcp(args: argparse.Namespace) -> None:
         file_path: str,
         title: str,
         topic: str,
-        intent: str,
+        classification: str,
+        summary: str,
         tags: list,
         doc_id: str = None,
         refs: list = None,
@@ -44,7 +45,8 @@ def cmd_mcp(args: argparse.Namespace) -> None:
             file_path: Path to the local file containing the document body.
             title: Display title of the article (required).
             topic: Main subject area (required).
-            intent: Purpose of the article (required, e.g. specification, analysis, how-to).
+            classification: Document type (required, e.g. specification, analysis, how-to).
+            summary: Concise description of document content (required, max 200 chars).
             tags: List of relevant tags (required, at least one).
             doc_id: Optional document ID for idempotency.
             refs: Optional list of references.
@@ -61,8 +63,9 @@ def cmd_mcp(args: argparse.Namespace) -> None:
             "file_path": file_path,
             "title": title,
             "topic": topic,
-            "intent": intent,
+            "classification": classification,
             "tags": tags,
+            "summary": summary,
             "doc_id": doc_id,
             "refs": refs,
             "assets": assets,

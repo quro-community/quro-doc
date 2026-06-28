@@ -69,14 +69,14 @@ def cmd_hermes_mcp(args: argparse.Namespace) -> None:
 
     @server.tool()
     def hermes_add(project: str, file_path: str, title: str, topic: str,
-                   intent: str, tags: list, doc_id: str = None,
+                   classification: str, summary: str, tags: list, doc_id: str = None,
                    refs: list = None, assets: list = None,
                    metadata: dict = None, source: dict = None,
                    git_hash: str = None, created_at: str = None) -> str:
         import os
         payload = {
             "file_path": file_path, "title": title, "topic": topic,
-            "intent": intent, "tags": tags, "doc_id": doc_id,
+            "classification": classification, "summary": summary, "tags": tags, "doc_id": doc_id,
             "refs": refs, "assets": assets,
             "metadata": metadata, "source": source,
             "git_hash": git_hash, "created_at": created_at,

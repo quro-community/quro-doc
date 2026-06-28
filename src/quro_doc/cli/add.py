@@ -22,8 +22,9 @@ def cmd_add(args: argparse.Namespace) -> None:
         payload["title"] = args.title
     if args.topic:
         payload["topic"] = args.topic
-    if args.intent:
-        payload["intent"] = args.intent
+    if args.classification:
+        payload["classification"] = args.classification
+    payload["summary"] = args.summary
     if args.doc_id:
         payload["doc_id"] = args.doc_id
     if args.tags:
@@ -62,7 +63,8 @@ def build_parser(subparsers: argparse._SubParsersAction) -> None:
     p.add_argument("--body-file", help="Path to file containing document body (takes precedence over --body)")
     p.add_argument("--title", help="Display title of the article (required)")
     p.add_argument("--topic", help="Main subject area (required)")
-    p.add_argument("--intent", help="Purpose of the article: specification, analysis, how-to, decision, reference (required)")
+    p.add_argument("--classification", help="Document type: specification, analysis, how-to, reference, design, tutorial, troubleshooting, overview, api-reference, configuration, testing, deployment, security, performance, migration (required)")
+    p.add_argument("--summary", help="Concise description of what the document covers (required, max 200 chars)")
     p.add_argument("--tag", dest="tags", action="append", default=[], help="Tag (required, can be repeated)")
     p.add_argument("--file", action="append", default=[], help="Context file path (can be repeated)")
     p.add_argument("--json", dest="json_input", help="Extra JSON payload fields")

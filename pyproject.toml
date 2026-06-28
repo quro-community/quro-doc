@@ -56,7 +56,7 @@ redis = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/quro-community/quro-doc"
+Homepage = "https://github.com/quro-doc/quro-doc"
 
 [project.scripts]
 quro-doc = "quro_doc.cli:main"

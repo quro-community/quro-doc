@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://quro-doc/schemas/add_request_v2.json",
+  "$id": "https://quro-doc/schemas/add_request_v3.json",
   "title": "AddRequest",
-  "description": "Schema for quro_doc_add input payload (v2)",
+  "description": "Schema for quro_doc_add input payload (v3) — classification + summary replace legacy intent",
   "type": "object",
-  "required": ["title", "topic", "intent", "tags"],
+  "required": ["title", "topic", "classification", "summary", "tags"],
   "properties": {
     "title": {
       "type": "string",
@@ -14,7 +14,7 @@
       "type": "string",
       "minLength": 1
     },
-    "intent": {
+    "classification": {
       "type": "string",
       "enum": [
         "specification",
@@ -32,7 +32,14 @@
         "security",
         "performance",
         "migration"
-      ]
+      ],
+      "description": "Document genre / structural type classification (replaces legacy 'intent' enum)."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Concise natural-language description of what the document covers. Required in v3."
     },
     "tags": {
       "type": "array",
@@ -86,6 +93,10 @@
     "created_at": {
       "type": "string"
     },
+    "path": {
+      "type": "string",
+      "description": "Filesystem path to the source file."
+    },
     "project": {
       "type": "string"
     },
@@ -102,5 +113,5 @@
       "type": "string"
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

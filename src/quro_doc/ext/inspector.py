@@ -370,8 +370,10 @@ class MetadataInspector(BaseInspector):
             summary["title"] = meta["title"]
         if meta.get("topic") is not None:
             summary["topic"] = meta["topic"]
-        if meta.get("intent") is not None:
-            summary["intent"] = meta["intent"]
+        if meta.get("classification") is not None:
+            summary["classification"] = meta["classification"]
+        if meta.get("summary") is not None:
+            summary["summary"] = meta["summary"]
         if meta.get("path") is not None:
             summary["path"] = meta["path"]
         if meta.get("tags"):

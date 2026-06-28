@@ -113,9 +113,12 @@ def quro_doc_add(payload: Dict[str, Any]) -> Dict[str, Any]:
     tags = payload.get(Field.TAGS)
     if not tags or not isinstance(tags, list) or len(tags) == 0:
         missing.append(Field.TAGS)
-    intent = payload.get(Field.INTENT)
-    if not intent or not isinstance(intent, str) or not intent.strip():
-        missing.append(Field.INTENT)
+    classification = payload.get(Field.CLASSIFICATION)
+    if not classification or not isinstance(classification, str) or not classification.strip():
+        missing.append(Field.CLASSIFICATION)
+    summary = payload.get(Field.SUMMARY)
+    if not summary or not isinstance(summary, str) or not summary.strip():
+        missing.append(Field.SUMMARY)
     if missing:
         return {
             ResponseKey.STATUS: ResponseKey.ERROR,
@@ -123,10 +126,28 @@ def quro_doc_add(payload: Dict[str, Any]) -> Dict[str, Any]:
             ResponseKey.MISSING_FIELDS: missing,
         }
 
+    # Reject stray legacy 'intent' field in write payloads
+    if payload.get("intent"):
+        return {
+            ResponseKey.STATUS: ResponseKey.ERROR,
+            ResponseKey.MESSAGE: (
+                "'intent' is no longer accepted in add-doc requests. "
+                "Use 'classification' for document genre (one of 15 fixed values), "
+                "and 'summary' for a free-text description of what the document covers."
+            ),
+        }
+
+    # Summary length validation
+    if len(summary) > 200:
+        return {
+            ResponseKey.STATUS: ResponseKey.ERROR,
+            ResponseKey.MESSAGE: f"Field 'summary' exceeds 200 character limit (got {len(summary)})",
+        }
+
     # Protocol boundary validation
     try:
         validator = ProtocolValidator()
-        validator.validate_input(payload, "2.0")
+        validator.validate_input(payload, "3.0")
     except ValidationError as e:
         return {
             ResponseKey.STATUS: ResponseKey.ERROR,
@@ -145,7 +166,8 @@ def quro_doc_add(payload: Dict[str, Any]) -> Dict[str, Any]:
         doc_id=doc_id,
         title=title,
         topic=topic,
-        intent=intent,
+        classification=classification,
+        summary=summary,
         tags=payload.get(Field.TAGS, []),
         context_files=payload.get(Field.CONTEXT_FILES, []),
         refs=payload.get(Field.REFS, []),
@@ -177,7 +199,7 @@ def quro_doc_add(payload: Dict[str, Any]) -> Dict[str, Any]:
             ResponseKey.STATUS: ResponseKey.EXISTS,
             ResponseKey.DOC_ID: doc_id,
             ResponseKey.MESSAGE: "Document already exists. No new write performed.",
-            ResponseKey.PROTOCOL_VERSION: "2.0.0-draft",
+            ResponseKey.PROTOCOL_VERSION: "3.0.0-draft",
         }
 
     # Emit change event (best-effort, never blocks write)
@@ -195,7 +217,7 @@ def quro_doc_add(payload: Dict[str, Any]) -> Dict[str, Any]:
         ResponseKey.STATUS: ResponseKey.ACCEPTED,
         ResponseKey.DOC_ID: doc_id,
         ResponseKey.MESSAGE: "Document accepted.",
-        ResponseKey.PROTOCOL_VERSION: "2.0.0-draft",
+        ResponseKey.PROTOCOL_VERSION: "3.0.0-draft",
     }
 
 
@@ -236,7 +258,7 @@ def quro_doc_get(doc_id: str) -> Dict[str, Any]:
     if result is None:
         return {ResponseKey.STATUS: ResponseKey.NOT_FOUND,
                 ResponseKey.DOC_ID: doc_id}
-    result[ResponseKey.PROTOCOL_VERSION] = "2.0.0-draft"
+    result[ResponseKey.PROTOCOL_VERSION] = "3.0.0-draft"
     return result
 
 

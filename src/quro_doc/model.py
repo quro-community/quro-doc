@@ -18,7 +18,8 @@ class Field:
     TITLE: str = "title"
     TOPIC: str = "topic"
     BODY: str = "body"
-    INTENT: str = "intent"
+    CLASSIFICATION: str = "classification"
+    SUMMARY: str = "summary"
     CONTEXT_FILES: str = "context_files"
     TAGS: str = "tags"
     REFS: str = "refs"
@@ -30,7 +31,7 @@ class Field:
     CREATED_AT: str = "created_at"
 
     # Fields that must be non-empty for document creation
-    REQUIRED: frozenset = frozenset({TITLE, TOPIC, TAGS, INTENT})
+    REQUIRED: frozenset = frozenset({TITLE, TOPIC, TAGS, CLASSIFICATION, SUMMARY})
 
     # Computed lazily — set of all field names validated against the dataclass
     _all: frozenset | None = None
@@ -96,7 +97,8 @@ class RawDocument:
     title: Optional[str]
     topic: Optional[str]
     body: str
-    intent: Optional[str]
+    classification: Optional[str]
+    summary: Optional[str]
     context_files: List[str]
     tags: List[str]
     refs: List[Dict]
@@ -118,7 +120,8 @@ class RawDocument:
             title=kwargs.get("title"),
             topic=kwargs.get("topic"),
             body=body,
-            intent=kwargs.get("intent"),
+            classification=kwargs.get("classification"),
+            summary=kwargs.get("summary"),
             context_files=kwargs.get("context_files", []),
             tags=kwargs.get("tags", []),
             refs=kwargs.get("refs", []),

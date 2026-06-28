@@ -32,13 +32,13 @@ class ProtocolValidator:
                 self._cache[name] = json.load(fh)
         return self._cache[name]
 
-    def validate_input(self, payload: dict, schema_version: str = "2.0") -> dict:
-        """Validate an add-request payload against add_request_v2.json.
+    def validate_input(self, payload: dict, schema_version: str = "3.0") -> dict:
+        """Validate an add-request payload against add_request_v3.json.
 
         Returns the payload unchanged on success (does not mutate).
         Raises ValidationError on failure.
         """
-        schema = self._load_schema("add_request_v2")
+        schema = self._load_schema("add_request_v3")
         validate(instance=payload, schema=schema)
         return payload
 
